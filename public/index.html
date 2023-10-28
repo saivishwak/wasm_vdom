@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8" />
+    <title>hello-wasm example</title>
+  </head>
+  <body>
+    <script type="module">
+      import init, { patch , toVNode} from "../pkg/wasm_vdom.js";
+      init().then(() => {
+        var a = document.createElement("p");
+        a.innerHTML = "element text";
+        let val = toVNode(a);
+        console.log(console.log(val.sel));
+      });
+    </script>
+  </body>
+</html>
