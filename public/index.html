@@ -10,21 +10,17 @@
         patch,
         toVNode,
         VNode,
+        h,
         VNodeData,
       } from "../pkg/wasm_vdom.js";
       init().then(() => {
-        var a = document.createElement("p");
-        a.innerHTML = "element text";
-        let val = toVNode(a);
-        console.log(console.log(val.sel));
-        let b = VNode.new(
-          "p",
-          null,
-          [{ sel: "a", children: [{ sel: "p" }] }],
-          "Hello world!"
-        );
-        console.log(b.children);
-        console.log(patch(b));
+        let node = h("p", null, [h("a", null, [], "blah!")], "Hello World!");
+        console.log(node.children);
+        let vNode = patch(node);
+        console.log(vNode.elm);
+
+        //This does not work as node is moved in patch
+        console.log(node.children);
       });
     </script>
   </body>

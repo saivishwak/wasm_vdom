@@ -3,7 +3,11 @@ use std::collections::HashMap;
 use wasm_bindgen::prelude::*;
 use web_sys::{Document, EventTarget, Node};
 
-use crate::{html_dom_api, init::log};
+use crate::{
+    dom_api::DomAPI,
+    html_dom_api::{self, HTMLDomAPI},
+    init::log,
+};
 use serde::{Deserialize, Serialize};
 
 #[wasm_bindgen]
@@ -34,44 +38,15 @@ pub struct VNode {
 
 #[wasm_bindgen]
 impl VNode {
-    pub fn new(
-        tag: String,
-        data: Option<VNodeData>,
-        children: JsValue,
-        text: Option<String>,
-    ) -> Self {
-        let mut ch: Option<Vec<VNode>> = None;
-
-        // Check if children is an Array
-        if let Ok(children_array) = children.dyn_into::<Array>() {
-            let mut vnodes = Vec::new();
-
-            // Iterate through the array elements and manually deserialize each element
-            for i in 0..children_array.length() {
-                if let Some(child) = Some(children_array.get(i)) {
-                    if let Some(vnode) = deserialize_vnode(&child) {
-                        vnodes.push(vnode);
-                    }
-                }
-            }
-
-            // Set the manually deserialized Vec<VNode> as the children
-            ch = Some(vnodes);
-        }
-        Self {
-            sel: Some(tag),
-            data: data,
-            children: ch,
-            elm: None,
-            text: text,
-            key: None,
-        }
-    }
-
     #[wasm_bindgen(getter)]
     pub fn sel(&mut self) -> Option<String> {
         let sel = self.sel.clone();
         sel
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn elm(&mut self) -> Option<Node> {
+        return self.elm.clone();
     }
 
     #[wasm_bindgen(getter)]
@@ -98,28 +73,48 @@ impl VNode {
         }
     }
 
+    pub fn get_data(&self) -> Option<VNodeData> {
+        return self.data.clone();
+    }
+
     pub fn set_elm(&mut self, node: Node) {
         self.elm = Some(node);
     }
 }
 
-fn serialize_vnode(vnode: &VNode) -> JsValue {
-    let serialized = serde_wasm_bindgen::to_value(vnode).unwrap();
-    serialized
-}
-
-fn deserialize_vnode(data: &JsValue) -> Option<VNode> {
-    let deserialized: VNode = serde_wasm_bindgen::from_value(data.clone()).unwrap();
-    Some(deserialized)
+pub fn create_vnode(
+    tag: String,
+    data: Option<VNodeData>,
+    children: Option<Vec<VNode>>,
+    text: Option<String>,
+) -> VNode {
+    VNode {
+        sel: Some(tag),
+        data: data,
+        children: children,
+        elm: None,
+        text: text,
+        key: None,
+    }
 }
 
 #[wasm_bindgen(js_name = toVNode)]
 pub fn to_vnode(node: Node) -> Result<VNode, Error> {
-    let cloned_node = node.clone();
-    if (!html_dom_api::is_element(cloned_node)) {
+    let dom_api = HTMLDomAPI::new();
+    if !dom_api.is_element_from_node_ref(&node) {
         return Err(Error::new("Provided node is not an element type"));
     } else {
         let n = node.node_name();
-        return Ok(VNode::new(n.clone(), None, JsValue::NULL, None));
+        return Ok(create_vnode(n.clone(), None, None, None));
     }
+}
+
+pub fn serialize_vnode(vnode: &VNode) -> JsValue {
+    let serialized = serde_wasm_bindgen::to_value(vnode).unwrap();
+    serialized
+}
+
+pub fn deserialize_vnode(data: &JsValue) -> Option<VNode> {
+    let deserialized: VNode = serde_wasm_bindgen::from_value(data.clone()).unwrap();
+    Some(deserialized)
 }

@@ -1,32 +1,40 @@
 use js_sys::Error;
 use wasm_bindgen::prelude::*;
-use web_sys::{
-    Comment, Document, DocumentFragment, Element, ElementCreationOptions, HtmlElement, Node, Text,
-};
+use web_sys::{Element, Node};
 
-use crate::{
-    html_dom_api::{append_child, create_element, create_text_node, is_element},
-    vnode::VNode,
-};
+use crate::{dom_api::DomAPI, html_dom_api::HTMLDomAPI, vnode::VNode};
 
-#[wasm_bindgen(js_name = patch)]
-pub fn patch(mut old_vnode: VNode) -> Result<VNode, Error> {
-    let el = create_element(old_vnode.sel().unwrap(), None).unwrap();
+struct PatchNode {
+    el: Element,
+    node: VNode,
+}
+
+fn patch_vnode(node: Node, mut vnode: VNode) -> PatchNode {
+    let api = HTMLDomAPI::new();
+    let el = api.create_element(vnode.sel().unwrap(), None).unwrap();
     let el_clone = el.clone();
     let el_clone_2 = el.clone();
-    let window = web_sys::window().expect("no global `window` exists");
-    let document = window.document().expect("should have a document on window");
-    let doc_node = document.query_selector("body").unwrap().unwrap();
-    append_child(doc_node.into(), el.into()).unwrap();
-    match old_vnode.get_text() {
+    api.append_child(node, el.into()).unwrap();
+    match vnode.get_text() {
         Some(val) => {
-            let text_node = create_text_node(val);
-            append_child(el_clone.into(), text_node.into()).unwrap();
+            let text_node = api.create_text_node(val);
+            api.append_child(el_clone.into(), text_node.into()).unwrap();
         }
         None => {}
     }
+    return PatchNode {
+        el: el_clone_2,
+        node: vnode,
+    };
+}
 
-    old_vnode.set_elm(el_clone_2.into());
-    let a: VNode = old_vnode.into();
-    Ok(a)
+#[wasm_bindgen(js_name = patch)]
+pub fn patch(mut old_vnode: VNode) -> Result<VNode, Error> {
+    let api = HTMLDomAPI::new();
+    let doc_node = api.get_body().unwrap();
+
+    let mut patched_node = patch_vnode(doc_node.into(), old_vnode);
+
+    patched_node.node.set_elm(patched_node.el.into());
+    Ok(patched_node.node)
 }

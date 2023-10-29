@@ -1,3 +1,4 @@
+mod dom_api;
 pub mod h;
 mod html_dom_api;
 pub mod init;
