@@ -5,6 +5,8 @@ use web_sys::{
     Comment, Document, DocumentFragment, Element, ElementCreationOptions, HtmlElement, Node, Text,
 };
 
+use crate::init::log;
+
 pub fn create_element(
     tag_name: String,
     options: Option<ElementCreationOptions>,
@@ -58,7 +60,7 @@ pub fn append_child(node: Node, child: Node) -> Result<Node, JsValue> {
     return node.append_child(&child);
 }
 
-pub fn paren_node(node: Node) -> Option<Node> {
+pub fn parent_node(node: Node) -> Option<Node> {
     return node.parent_node();
 }
 

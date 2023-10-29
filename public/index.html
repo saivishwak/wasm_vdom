@@ -1,4 +1,4 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en-US">
   <head>
     <meta charset="utf-8" />
@@ -6,12 +6,25 @@
   </head>
   <body>
     <script type="module">
-      import init, { patch , toVNode} from "../pkg/wasm_vdom.js";
+      import init, {
+        patch,
+        toVNode,
+        VNode,
+        VNodeData,
+      } from "../pkg/wasm_vdom.js";
       init().then(() => {
         var a = document.createElement("p");
         a.innerHTML = "element text";
         let val = toVNode(a);
         console.log(console.log(val.sel));
+        let b = VNode.new(
+          "p",
+          null,
+          [{ sel: "a", children: [{ sel: "p" }] }],
+          "Hello world!"
+        );
+        console.log(b.children);
+        console.log(patch(b));
       });
     </script>
   </body>
